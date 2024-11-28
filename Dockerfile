@@ -1,5 +1,5 @@
 # 构建阶段
-FROM python:3.9-slim-buster as builder
+FROM python:3.9-slim-bullseye as builder
 
 # 设置工作目录
 WORKDIR /app
@@ -21,7 +21,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 最终阶段
-FROM python:3.9-slim-buster
+FROM python:3.9-slim-bullseye
 
 # Install required system dependencies for Azure Speech SDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -44,7 +44,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # 创建非root用户
 RUN useradd -m -u 1000 appuser && \
     mkdir -p /app/static && \
-    chmod 755 /app/static && \
     chown -R appuser:appuser /app
 
 # 复制应用代码
