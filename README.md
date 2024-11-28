@@ -5,28 +5,69 @@
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Deeptrain-Community/chatnio-blob-service)
 [![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/RWGFOH)
 
-## ✨ 主要特性
+## 🎯 最新更新
+
+### 2024 年主要更新
+- 🆕 **新增存储支持**
+  - Alist 存储集成
+  - 支持更多 S3 兼容存储（如 Cloudflare R2）
+  - Telegram CDN 存储优化
+- 🔄 **API 响应格式增强**
+  - 可自定义响应字段名称
+  - 灵活的状态值配置
+  - 支持内容包装选项
+- 📝 **新增文件格式支持**
+  - Markdown (.md) 文件处理
+  - CSV (.csv) 文件解析
+  - RTF (.rtf) 文档支持
+- ⚙️ **配置系统升级**
+  - 新增 Web 配置界面 (/config)
+  - 运行时配置修改
+  - 配置持久化支持
+
+## ✨ 核心特性
 
 - 🚀 **开箱即用**: 无需外部依赖，支持 Vercel/Render 一键部署
-- 📄 **多文件格式**: 支持文本、PDF、Word、Excel、图片、音频等多种格式
-- 💾 **多存储选项**: 支持 Base64、本地存储、S3、Cloudflare R2、MinIO、Telegram CDN 等
-- 🔍 **OCR 支持**: 图片文字提取 (需要 Paddle OCR API)
-- 🎵 **音频转换**: 音频转文本 (需要 Azure Speech to Text 服务)
+- 📄 **全面的文件支持**: 
+  - 文档：PDF、Word、Excel、PowerPoint、Markdown、RTF
+  - 媒体：图片、音频
+  - 数据：CSV、文本文件
+- 💾 **多样化存储方案**: 
+  - 云存储：S3、Cloudflare R2、MinIO
+  - CDN：Telegram CDN
+  - 文件系统：Alist、本地存储
+  - 内存：Base64
+- 🎛️ **灵活配置**:
+  - Web 配置界面
+  - 动态配置更新
+  - 自定义 API 响应
+- 🔍 **增强功能**: 
+  - OCR 图片文字识别
+  - 语音转文本 (Azure Speech)
+  - 批量文件处理
 
-## 📋 支持的文件类型
+## 📋 文件格式支持
 
-- 文本文件 (.txt, .log, .ini, .conf)
-- Markdown文件 (.md)
-- CSV文件 (.csv)
-- RTF文档 (.rtf)
-- Word文档 (.docx，不支持 .doc)
-- PDF文件
-- PowerPoint (.pptx，不支持 .ppt)
-- Excel (.xlsx，支持 .xls)
-- 图片 (需要视觉模型)
-  - 支持格式：.jpg, .jpeg, .png, .gif, .bmp
-- 音频 (需要 Azure Speech to Text 服务)
+### 文档处理
+- 📝 文本类
+  - Markdown (.md) `新增`
+  - RTF (.rtf) `新增`
+  - 纯文本 (.txt, .log, .ini, .conf)
+- 📊 数据类
+  - CSV (.csv) `新增`
+  - Excel (.xlsx, .xls)
+- 📄 办公类
+  - Word (.docx)
+  - PowerPoint (.pptx)
+  - PDF
+
+### 媒体处理
+- 🖼️ 图片
+  - 常见格式：.jpg, .jpeg, .png, .gif, .bmp
+  - OCR 文字提取 (需要 Paddle OCR API)
+- 🎵 音频
   - 支持格式：.mp3, .wav, .m4a, .ogg
+  - 语音转文本 (需要 Azure Speech)
 
 ## 🚀 快速开始
 
@@ -48,39 +89,73 @@ docker run -p 8000:8000 \
   teraccc/chatnio-blob-service
 ```
 
-### 源码部署
+## ⚙️ 配置说明
 
+### 存储配置
+支持多种存储后端，通过环境变量或 Web 配置界面配置：
+
+1. **本地存储**
 ```bash
-# 克隆项目
-git clone --branch=main https://github.com/Deeptrain-Community/chatnio-blob-service
-cd chatnio-blob-service
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 运行服务
-uvicorn main:app
-
-# 开发模式（热重载）
-# uvicorn main:app --reload
+STORAGE_TYPE=local
+STATIC_PATH=/path/to/static
 ```
 
-## 📝 API 接口
+2. **S3 兼容存储** (AWS S3, Cloudflare R2 等)
+```bash
+STORAGE_TYPE=s3
+S3_BUCKET=your-bucket
+S3_ENDPOINT=your-endpoint
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+S3_REGION=your-region
+```
 
-### 文件上传
+3. **Telegram CDN**
+```bash
+STORAGE_TYPE=telegram
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_CHAT_ID=your-chat-id
+```
 
-**POST** `/upload`
+4. **Alist 存储** `新增`
+```bash
+STORAGE_TYPE=alist
+ALIST_URL=your-alist-url
+ALIST_TOKEN=your-token
+ALIST_PATH=/path/to/store
+```
 
-请求参数：
-```json
-{
-    "file": "[file]",
-    "enable_ocr": false,
-    "enable_vision": true,
-    "save_all": false
+### 功能配置
+
+1. **OCR 服务**
+```bash
+PADDLE_OCR_API=http://your-paddle-ocr-api
+```
+
+2. **语音转文本**
+```bash
+AZURE_SPEECH_KEY=your-key
+AZURE_SPEECH_REGION=your-region
+```
+
+3. **API 响应格式** `新增`
+```bash
+# 示例配置
+API_RESPONSE_FORMAT={
+  "status_field": "code",
+  "content_field": "data",
+  "error_field": "message",
+  "success_value": "success",
+  "error_value": "error"
 }
 ```
 
+## 📝 API 文档
+
+### 文件上传
+**POST** `/upload`
+
+请求参数：
 | 参数 | 类型 | 说明 |
 |------|------|------|
 | file | File | 要上传的文件 |
@@ -88,111 +163,10 @@ uvicorn main:app
 | enable_vision | Boolean | 是否启用视觉处理 (默认: true) |
 | save_all | Boolean | 是否保存所有文件 (默认: false) |
 
-响应格式（可配置）：
-```json
-{
-  "status": true,           // 状态字段，名称可配置
-  "type": "pdf",           // 类型字段，可选
-  "content": "...",        // 内容字段，支持自定义包装
-  "error": ""             // 错误字段，名称可配置
-}
-```
+### 配置管理
+**GET/POST** `/config`
 
-响应格式配置说明：
-1. 字段名称：可自定义状态、类型、内容、错误等字段的名称
-2. 状态值：可配置成功/失败的返回值（如 true/false, 1/0, "success"/"error" 等）
-3. 类型字段：可选择是否包含在响应中
-4. 内容包装：支持自定义内容字段的包装格式，例如：
-   ```json
-   {
-     "status": "success",
-     "content": {
-       "text": "实际内容",
-       "timestamp": "2024-01-20",
-       "extra": "附加信息"
-     }
-   }
-   ```
-
-## ⚙️ 配置说明
-
-### 基础配置
-
-| 环境变量 | 说明 | 默认值 |
-|----------|------|--------|
-| PDF_MAX_IMAGES | PDF 文件最大提取图片数 | 10 |
-| MAX_FILE_SIZE | 最大上传文件大小(MiB) | -1 (无限制) |
-| CORS_ALLOW_ORIGINS | CORS 允许的域名 | * |
-
-### 动态配置
-
-服务启动后，访问 `/config` 路径可以进入配置页面，支持在线修改以下配置：
-
-- 基础配置（PDF最大图片数、最大文件大小、CORS设置等）
-- 存储配置（支持切换和配置不同的存储方式）
-- 功能配置（Azure Speech、OCR等服务配置）
-
-所有配置都会自动保存，无需重启服务即可生效。
-
-### 存储配置
-
-支持多种存储方式：
-
-1. **Base64 存储** (默认)
-   - 无需额外配置
-   - 适合无状态部署
-   - 不支持直接 URL 访问
-
-2. **本地存储**
-   ```bash
-   STORAGE_TYPE=local
-   LOCAL_STORAGE_DOMAIN=http://your-domain.com
-   ```
-
-3. **S3 兼容存储** (AWS S3/Cloudflare R2/MinIO)
-   ```bash
-   STORAGE_TYPE=s3
-   S3_ACCESS_KEY=your-access-key
-   S3_SECRET_KEY=your-secret-key
-   S3_BUCKET=your-bucket
-   S3_REGION=your-region
-   ```
-
-4. **Telegram CDN**
-   ```bash
-   STORAGE_TYPE=tg
-   TG_ENDPOINT=your-tgstate-endpoint
-   TG_PASSWORD=your-password  # 可选
-   ```
-
-5. **Alist存储**
-   ```bash
-   STORAGE_TYPE=alist
-   ALIST_ENDPOINT=http://your-alist-server:5244
-   ALIST_USERNAME=your-username
-   ALIST_PASSWORD=your-password
-   ALIST_PATH=/blob  # 存储路径，默认为 /blob
-   ```
-   - 支持多种存储后端（本地、阿里云盘、OneDrive等）
-   - 文件按日期自动分类存储
-   - 支持文件直接访问
-
-### 功能配置
-
-1. **音频转换** (Azure Speech)
-   ```bash
-   AZURE_SPEECH_KEY=your-key
-   AZURE_SPEECH_REGION=your-region
-   ```
-
-2. **OCR 支持**
-   ```bash
-   OCR_ENDPOINT=http://your-paddleocr-endpoint:8000
-   ```
-
-### 环境变量配置
-
-如果你更倾向于使用环境变量进行配置，以下是所有支持的环境变量：
+Web 配置界面，支持在线修改所有配置项。
 
 ## 🤝 贡献
 
