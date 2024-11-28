@@ -1,4 +1,6 @@
 from fastapi import UploadFile, File
+from io import BytesIO
+from typing import Tuple
 
 from config import ENABLE_AZURE_SPEECH, MAX_FILE_SIZE
 from handlers import (
@@ -10,7 +12,9 @@ from handlers import (
     speech,
 )
 from store.store import process_all
-
+from .markdown_handler import process_markdown
+from .csv_handler import process_csv
+from .rtf_handler import process_rtf
 
 async def read_file_size(file: UploadFile) -> float:
     """Read file size and return it in MiB."""
@@ -42,26 +46,38 @@ async def process_file(
         # save all types of files to storage
         return "file", await process_all(file)
 
-    if pdf.is_pdf(filename):
+    file_content = await file.read()
+    file.file.seek(0)
+
+    # 获取文件类型
+    if filename.endswith(('.txt', '.log', '.ini', '.conf')):
+        return 'text', file_content.decode('utf-8')
+    elif filename.endswith('.md'):
+        return 'markdown', process_markdown(BytesIO(file_content))
+    elif filename.endswith('.csv'):
+        return 'csv', process_csv(BytesIO(file_content))
+    elif filename.endswith('.rtf'):
+        return 'rtf', process_rtf(BytesIO(file_content))
+    elif filename.endswith(('.doc', '.docx')):
+        return "docx", word.process(file)
+    elif filename.endswith('.pdf'):
         return "pdf", await pdf.process(
             file,
             enable_ocr=enable_ocr,
             enable_vision=enable_vision,
         )
-    elif word.is_docx(filename):
-        return "docx", word.process(file)
-    elif ppt.is_pptx(filename):
-        return "pptx", ppt.process(file)
-    elif xlsx.is_xlsx(filename):
-        return "xlsx", xlsx.process(file)
-    elif image.is_image(filename):
+    elif filename.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
         return "image", await image.process(
             file,
             enable_ocr=enable_ocr,
             enable_vision=enable_vision,
         )
-    elif ENABLE_AZURE_SPEECH and speech.is_audio(filename):
-        return "audio", speech.process(file)
-
-    content = await file.read()
-    return "text", content.decode("utf-8")
+    elif filename.endswith(('.mp3', '.wav', '.m4a', '.ogg')):
+        if ENABLE_AZURE_SPEECH:
+            return "audio", speech.process(file)
+    elif filename.endswith(('.ppt', '.pptx')):
+        return "pptx", ppt.process(file)
+    elif filename.endswith(('.xls', '.xlsx')):
+        return "xlsx", xlsx.process(file)
+    else:
+        raise ValueError("Unsupported file type")

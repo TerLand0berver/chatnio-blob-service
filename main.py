@@ -5,6 +5,8 @@ from fastapi.responses import FileResponse
 from handlers.processor import process_file
 from config import *
 from handlers.ocr import create_ocr_task, deprecated_could_enable_ocr
+from handlers.config_handler import router as config_router
+from handlers.response_format import format_success_response, format_error_response
 
 app = FastAPI()
 app.add_middleware(
@@ -16,6 +18,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.include_router(config_router)
 
 @app.get("/")
 def root():
@@ -28,7 +31,7 @@ def favicon():
 
 
 @app.post("/upload")
-async def upload(
+async def upload_file(
         file: UploadFile = File(...),
         enable_ocr: bool = Form(default=False),
         enable_vision: bool = Form(default=True),
@@ -46,22 +49,13 @@ async def upload(
         enable_ocr = False
 
     try:
-        filetype, contents = await process_file(
-            file,
-            enable_ocr=enable_ocr,
-            enable_vision=enable_vision,
-            save_all=save_all,
-        )
-        return {
-            "status": True,
-            "content": contents,
-            "type": filetype,
-            "error": "",
-        }
+        # 检查文件大小
+        if MAX_FILE_SIZE > 0:
+            size = await read_file_size(file)
+            if size > MAX_FILE_SIZE:
+                return format_error_response(f"File size {size:.2f}MiB exceeds limit {MAX_FILE_SIZE}MiB")
+
+        file_type, content = await process_file(file, enable_ocr, enable_vision, save_all)
+        return format_success_response(file_type, content)
     except Exception as e:
-        return {
-            "status": False,
-            "content": "",
-            "type": "error",
-            "error": str(e),
-        }
+        return format_error_response(str(e))
