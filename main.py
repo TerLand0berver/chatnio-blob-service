@@ -1,7 +1,7 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from handlers.processor import process_file
 from config import *
 from handlers.ocr import create_ocr_task, deprecated_could_enable_ocr
@@ -59,3 +59,16 @@ async def upload_file(
         return format_success_response(file_type, content)
     except Exception as e:
         return format_error_response(str(e))
+
+
+@app.options("/upload")
+async def options_upload():
+    """处理上传接口的 OPTIONS 请求"""
+    return JSONResponse(
+        content="",
+        headers={
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "600",  # 缓存预检请求结果10分钟
+        }
+    )
