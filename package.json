@@ -1,5 +1,38 @@
 {
+  "name": "chatnio-blob-service",
+  "version": "1.0.0",
+  "description": "A powerful file service system providing file processing support for Chat Nio",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m uvicorn main:app --host 0.0.0.0 --port 8000",
+    "dev": "python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+    "test": "pytest",
+    "lint": "flake8 . && mypy .",
+    "format": "black .",
+    "docker:build": "docker build -t chatnio-blob-service .",
+    "docker:run": "docker run -d -p 8000:8000 -e STORAGE_TYPE=local -e LOCAL_STORAGE_DOMAIN=http://localhost:8000 --name chatnio-blob-service chatnio-blob-service",
+    "docker:stop": "docker stop chatnio-blob-service && docker rm chatnio-blob-service",
+    "docker:logs": "docker logs -f chatnio-blob-service"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TerLand0berver/chatnio-blob-service"
+  },
+  "keywords": [
+    "file-service",
+    "blob-storage",
+    "fastapi",
+    "python",
+    "document-processing",
+    "microservice"
+  ],
+  "author": "TerLand0berver",
+  "license": "MIT",
   "engines": {
-    "node": "18.x"
-  }
+    "node": ">=18.x"
+  },
+  "bugs": {
+    "url": "https://github.com/TerLand0berver/chatnio-blob-service/issues"
+  },
+  "homepage": "https://github.com/TerLand0berver/chatnio-blob-service#readme"
 }

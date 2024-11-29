@@ -1,2 +1,26 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+fastapi = "*"
+uvicorn = "*"
+python-multipart = "*"
+boto3 = "*"
+requests = "*"
+python-docx = "*"
+python-pptx = "*"
+PyMuPDF = "*"
+Jinja2 = "*"
+python-magic = "*"
+aiofiles = "*"
+
+[dev-packages]
+pytest = "*"
+black = "*"
+flake8 = "*"
+mypy = "*"
+
 [requires]
-python_version = "3.12"
+python_version = "3.9"
