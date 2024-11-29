@@ -73,6 +73,34 @@
 
 ### Docker Compose 部署（推荐）
 
+#### 方式一：使用预构建镜像（最简单）
+
+1. 创建 `docker-compose.yml`:
+
+```yaml
+version: '3'
+
+services:
+  blob-service:
+    image: teraccc/chatnio-blob-service:latest
+    container_name: chatnio-blob-service
+    ports:
+      - "8009:8000"  # 修改为你需要的端口
+    volumes:
+      - ./static:/app/static
+    environment:
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_DOMAIN=https://your-domain.com  # 替换为你的域名
+      - MAX_FILE_SIZE=10
+      - PDF_MAX_IMAGES=10
+      - CORS_ALLOW_ORIGINS=*
+      - API_RESPONSE_FORMAT={"code":200,"message":"success","data":"$DATA"}
+    restart: unless-stopped
+    user: "1000:1000"
+```
+
+#### 方式二：本地构建（用于开发或自定义）
+
 1. 创建 `docker-compose.yml`:
 
 ```yaml
@@ -83,40 +111,49 @@ services:
     build: .
     container_name: chatnio-blob-service
     ports:
-      - "8009:8000"  # 修改为你需要的端口
+      - "8009:8000"
     volumes:
       - ./static:/app/static
     environment:
       - STORAGE_TYPE=local
-      - LOCAL_STORAGE_DOMAIN=https://your-domain.com  # 替换为你的域名
+      - LOCAL_STORAGE_DOMAIN=https://your-domain.com
+      - MAX_FILE_SIZE=10
+      - PDF_MAX_IMAGES=10
+      - CORS_ALLOW_ORIGINS=*
+      - API_RESPONSE_FORMAT={"code":200,"message":"success","data":"$DATA"}
     restart: unless-stopped
     user: "1000:1000"
 ```
+
 2. 启动服务：
 
 ```bash
 docker-compose up -d
 ```
+
 3. 停止服务：
 
 ```bash
 docker-compose down
 ```
-### Docker 命令行部署
+
+### 快速命令行部署
+
+如果不想使用 docker-compose，也可以直接使用 docker 命令：
 
 ```bash
-# 拉取镜像
-docker pull chatnio/blob-service
-
-# 运行容器
 docker run -d \
   --name chatnio-blob-service \
-  -p 8000:8000 \
+  -p 8009:8000 \
   -v ./static:/app/static \
   -e STORAGE_TYPE=local \
-  -e LOCAL_STORAGE_DOMAIN=http://localhost:8000 \
-  chatnio/blob-service
+  -e LOCAL_STORAGE_DOMAIN=https://your-domain.com \
+  -e MAX_FILE_SIZE=10 \
+  -e PDF_MAX_IMAGES=10 \
+  -e CORS_ALLOW_ORIGINS=* \
+  teraccc/chatnio-blob-service:latest
 ```
+
 ### 环境变量配置
 
 | 变量名 | 说明 | 默认值 | 示例 |
@@ -126,41 +163,91 @@ docker run -d \
 | MAX_FILE_SIZE | 最大文件大小(MB) | -1 | 10 |
 | CORS_ALLOW_ORIGINS | CORS 允许域名 | * | https://example.com |
 | PDF_MAX_IMAGES | PDF最大图片数 | 10 | 20 |
+| API_RESPONSE_FORMAT | API响应格式 | - | {"code":200,"message":"success","data":"$DATA"} |
 
 #### 重要说明:
 - 使用本地存储时，`LOCAL_STORAGE_DOMAIN` 应设置为您的域名（如果使用反向代理）
 - 如果使用反向代理（如 Nginx），`LOCAL_STORAGE_DOMAIN` 不需要包含端口号
 - 文件上传后的URL格式将是：`${LOCAL_STORAGE_DOMAIN}/static/filename.ext`
+- 所有上传的文件都存储在 `static` 目录中
+- 文件名使用 MD5 哈希值生成，保证唯一性
 
-更多配置项请访问 Web 配置界面 (`/config`)。
+### 存储配置示例
 
-### API 响应格式
-
-支持自定义响应格式，可通过 Web 配置界面设置。预定义模板包括：
-
-1. 返回链接 (save-all)：
-```json
-{
-  "url": "${content}",
-  "type": "link"
-}
+#### 本地存储 (Local Storage)
+```env
+STORAGE_TYPE=local
+LOCAL_STORAGE_DOMAIN=https://your-domain.com
 ```
 
-2. 返回内容：
-```json
-{
-  "data": "${content}",
-  "type": "content"
-}
+#### S3 存储
+```env
+STORAGE_TYPE=s3
+S3_ENDPOINT=https://s3.amazonaws.com
+S3_BUCKET=your-bucket
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
 ```
 
-3. Markdown 原始格式：
-```json
-{
-  "markdown": "${content}",
-  "raw": true
-}
+#### Telegram 存储
+```env
+STORAGE_TYPE=telegram
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_CHAT_ID=your-chat-id
 ```
+
+#### Alist 存储
+```env
+STORAGE_TYPE=alist
+ALIST_DOMAIN=https://your-alist-domain
+ALIST_USERNAME=your-username
+ALIST_PASSWORD=your-password
+ALIST_PATH=/path/to/store
+```
+
+### API 使用示例
+
+#### 上传文件
+```bash
+curl -X POST http://localhost:8009/upload \
+     -F "file=@example.pdf" \
+     -F "save_all=true"
+```
+
+#### 更新配置
+```bash
+curl -X POST http://localhost:8009/config \
+     -H "Content-Type: application/json" \
+     -d '{"storage_type": "local", "max_file_size": 10}'
+```
+
+### 配置优先级
+1. Web 配置界面 (/config)
+2. 环境变量
+3. 默认值
+
+### 最佳实践
+1. 总是设置 `MAX_FILE_SIZE` 限制上传文件大小
+2. 在生产环境中配置具体的 `CORS_ALLOW_ORIGINS`
+3. 使用非 root 用户运行容器（已在配置中设置）
+4. 定期清理 static 目录中的过期文件
+5. 在反向代理配置中添加适当的缓存头
+
+### 常见问题
+1. 文件上传失败
+   - 检查文件大小是否超过限制
+   - 确认存储配置是否正确
+   - 查看容器日志获取详细错误信息
+
+2. 无法访问上传的文件
+   - 确认 `LOCAL_STORAGE_DOMAIN` 配置正确
+   - 检查反向代理配置
+   - 验证文件权限是否正确
+
+3. CORS 错误
+   - 检查 `CORS_ALLOW_ORIGINS` 配置
+   - 确认前端域名是否在允许列表中
+   - 查看浏览器控制台获取具体错误
 
 ## ⚙️ 配置说明
 

@@ -9,6 +9,14 @@ from handlers.config_handler import router as config_router
 from handlers.response_format import format_success_response, format_error_response
 from config_manager import config_manager
 
+async def read_file_size(file: UploadFile) -> float:
+    """读取文件大小（以MB为单位）"""
+    size = 0
+    while chunk := await file.read(8192):
+        size += len(chunk)
+    await file.seek(0)  # 重置文件指针到开始
+    return size / (1024 * 1024)  # 转换为MB
+
 app = FastAPI()
 
 # 初始化配置管理器
@@ -19,6 +27,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 注册路由
 app.include_router(config_router)
+
 
 @app.get("/")
 def root():

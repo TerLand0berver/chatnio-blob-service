@@ -11,5 +11,9 @@ services:
     environment:
       - STORAGE_TYPE=local
       - LOCAL_STORAGE_DOMAIN=https://your-domain.com  # 请替换为您的实际域名
+      - MAX_FILE_SIZE=10
+      - PDF_MAX_IMAGES=10
+      - CORS_ALLOW_ORIGINS=*
+      - API_RESPONSE_FORMAT={"code":200,"message":"success","data":"$DATA"}
     restart: unless-stopped
     user: "1000:1000"  # 使用非 root 用户运行服务
