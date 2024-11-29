@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  blob-service:
+    build: .
+    container_name: chatnio-blob-service
+    ports:
+      - "8009:8000"
+    volumes:
+      - ./static:/app/static
+    environment:
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_DOMAIN=https://your-domain.com  # 请替换为您的实际域名
+    restart: unless-stopped
+    user: "1000:1000"  # 使用非 root 用户运行服务

@@ -71,7 +71,38 @@
 
 ## 🚀 快速开始
 
-### Docker 部署
+### Docker Compose 部署（推荐）
+
+1. 创建 `docker-compose.yml`:
+
+```yaml
+version: '3'
+
+services:
+  blob-service:
+    build: .
+    container_name: chatnio-blob-service
+    ports:
+      - "8009:8000"  # 修改为你需要的端口
+    volumes:
+      - ./static:/app/static
+    environment:
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_DOMAIN=https://your-domain.com  # 替换为你的域名
+    restart: unless-stopped
+    user: "1000:1000"
+```
+2. 启动服务：
+
+```bash
+docker-compose up -d
+```
+3. 停止服务：
+
+```bash
+docker-compose down
+```
+### Docker 命令行部署
 
 ```bash
 # 拉取镜像
@@ -81,20 +112,25 @@ docker pull chatnio/blob-service
 docker run -d \
   --name chatnio-blob-service \
   -p 8000:8000 \
+  -v ./static:/app/static \
   -e STORAGE_TYPE=local \
   -e LOCAL_STORAGE_DOMAIN=http://localhost:8000 \
   chatnio/blob-service
 ```
-
 ### 环境变量配置
 
 | 变量名 | 说明 | 默认值 | 示例 |
 |--------|------|--------|------|
 | STORAGE_TYPE | 存储类型 | common | local, s3, tg |
-| LOCAL_STORAGE_DOMAIN | 本地存储域名 | - | http://localhost:8000 |
+| LOCAL_STORAGE_DOMAIN | 本地存储域名 | - | https://example.com |
 | MAX_FILE_SIZE | 最大文件大小(MB) | -1 | 10 |
 | CORS_ALLOW_ORIGINS | CORS 允许域名 | * | https://example.com |
 | PDF_MAX_IMAGES | PDF最大图片数 | 10 | 20 |
+
+#### 重要说明:
+- 使用本地存储时，`LOCAL_STORAGE_DOMAIN` 应设置为您的域名（如果使用反向代理）
+- 如果使用反向代理（如 Nginx），`LOCAL_STORAGE_DOMAIN` 不需要包含端口号
+- 文件上传后的URL格式将是：`${LOCAL_STORAGE_DOMAIN}/static/filename.ext`
 
 更多配置项请访问 Web 配置界面 (`/config`)。
 
