@@ -7,17 +7,17 @@ from config import *
 from handlers.ocr import create_ocr_task, deprecated_could_enable_ocr
 from handlers.config_handler import router as config_router
 from handlers.response_format import format_success_response, format_error_response
+from config_manager import config_manager
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ALLOW_ORIGINS,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
+# 初始化配置管理器
+config_manager.initialize(app)
+
+# 挂载静态文件
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# 注册路由
 app.include_router(config_router)
 
 @app.get("/")

@@ -149,6 +149,15 @@
                 </div>
                 <div id="content_wrapper_config" style="display: none;">
                     <div class="form-group">
+                        <label>内容包装格式模板</label>
+                        <select class="form-control mb-3" id="content_wrapper_template">
+                            <option value="">自定义格式</option>
+                            <option value="link">返回链接 (save-all)</option>
+                            <option value="content">返回内容</option>
+                            <option value="markdown">Markdown 原始格式</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>内容包装格式 (JSON)</label>
                         <textarea class="form-control" id="content_wrapper" name="content_wrapper" rows="4" placeholder='{"text": "${content}", "extra": "additional info"}'></textarea>
                         <small class="form-text text-muted">使用 ${content} 作为内容占位符</small>
@@ -189,8 +198,24 @@
 
         // 显示/隐藏内容包装配置
         document.getElementById('wrap_content').addEventListener('change', function() {
-            document.getElementById('content_wrapper_config').style.display = 
-                this.checked ? 'block' : 'none';
+            const wrapperConfig = document.getElementById('content_wrapper_config');
+            wrapperConfig.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // 处理内容包装格式模板选择
+        document.getElementById('content_wrapper_template').addEventListener('change', function() {
+            const contentWrapper = document.getElementById('content_wrapper');
+            switch(this.value) {
+                case 'link':
+                    contentWrapper.value = '{"url": "${content}", "type": "link"}';
+                    break;
+                case 'content':
+                    contentWrapper.value = '{"data": "${content}", "type": "content"}';
+                    break;
+                case 'markdown':
+                    contentWrapper.value = '{"markdown": "${content}", "raw": true}';
+                    break;
+            }
         });
 
         // 表单提交处理

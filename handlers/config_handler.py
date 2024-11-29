@@ -1,12 +1,13 @@
 import json
 import os
 from typing import Dict, Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from config_manager import config_manager
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates"))
 
 CONFIG_FILE = "config.json"
 
@@ -91,23 +92,21 @@ def update_environment_variables(config: Dict[str, Any]) -> None:
         os.environ['OCR_ENDPOINT'] = config['ocr_endpoint']
 
 @router.get("/config", response_class=HTMLResponse)
-async def config_page(request):
+async def config_page(request: Request):
     """配置页面"""
     return templates.TemplateResponse("config.html", {"request": request})
 
 @router.get("/api/config")
 async def get_config():
     """获取当前配置"""
-    return load_config()
+    return config_manager.get_config()
 
 @router.post("/api/config")
 async def update_config(config: Dict[str, Any]):
     """更新配置"""
     try:
-        # 保存配置到文件
-        save_config(config)
-        # 更新环境变量
+        config_manager.save_config(config)
         update_environment_variables(config)
-        return {"status": "success"}
+        return {"status": "success", "message": "配置已更新"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

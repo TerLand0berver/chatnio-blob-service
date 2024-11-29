@@ -72,9 +72,13 @@ async def process_file(
             enable_ocr=enable_ocr,
             enable_vision=enable_vision,
         )
-    elif filename.endswith(('.mp3', '.wav', '.m4a', '.ogg')):
-        if ENABLE_AZURE_SPEECH:
+    elif speech.is_audio(filename):
+        if speech.ENABLE_AZURE_SPEECH:
             return "audio", speech.process(file)
+        else:
+            if save_all:
+                return "file", await process_all(file)
+            raise ValueError("Audio processing is disabled (Azure Speech SDK not installed)")
     elif filename.endswith(('.ppt', '.pptx')):
         return "pptx", ppt.process(file)
     elif filename.endswith(('.xls', '.xlsx')):

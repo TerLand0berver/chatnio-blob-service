@@ -74,19 +74,56 @@
 ### Docker 部署
 
 ```bash
-# 基础运行
-docker run -p 8000:8000 teraccc/chatnio-blob-service
+# 拉取镜像
+docker pull chatnio/blob-service
 
-# 使用环境变量
-docker run -p 8000:8000 \
-  -e AZURE_SPEECH_KEY="your-key" \
-  -e AZURE_SPEECH_REGION="your-region" \
-  teraccc/chatnio-blob-service
+# 运行容器
+docker run -d \
+  --name chatnio-blob-service \
+  -p 8000:8000 \
+  -e STORAGE_TYPE=local \
+  -e LOCAL_STORAGE_DOMAIN=http://localhost:8000 \
+  chatnio/blob-service
+```
 
-# 使用本地存储时，需要挂载卷
-docker run -p 8000:8000 \
-  -v /path/to/static:/static \
-  teraccc/chatnio-blob-service
+### 环境变量配置
+
+| 变量名 | 说明 | 默认值 | 示例 |
+|--------|------|--------|------|
+| STORAGE_TYPE | 存储类型 | common | local, s3, tg |
+| LOCAL_STORAGE_DOMAIN | 本地存储域名 | - | http://localhost:8000 |
+| MAX_FILE_SIZE | 最大文件大小(MB) | -1 | 10 |
+| CORS_ALLOW_ORIGINS | CORS 允许域名 | * | https://example.com |
+| PDF_MAX_IMAGES | PDF最大图片数 | 10 | 20 |
+
+更多配置项请访问 Web 配置界面 (`/config`)。
+
+### API 响应格式
+
+支持自定义响应格式，可通过 Web 配置界面设置。预定义模板包括：
+
+1. 返回链接 (save-all)：
+```json
+{
+  "url": "${content}",
+  "type": "link"
+}
+```
+
+2. 返回内容：
+```json
+{
+  "data": "${content}",
+  "type": "content"
+}
+```
+
+3. Markdown 原始格式：
+```json
+{
+  "markdown": "${content}",
+  "raw": true
+}
 ```
 
 ## ⚙️ 配置说明
@@ -149,6 +186,33 @@ API_RESPONSE_FORMAT={
   "error_value": "error"
 }
 ```
+
+### 配置热重载
+
+本服务支持配置热重载，您可以通过以下方式动态更新配置：
+
+1. Web 界面配置 (`/config`)
+   - 直接在 Web 界面修改配置
+   - 修改会立即生效，无需重启容器
+
+2. 配置文件修改
+   - 编辑 `config.json` 文件
+   - 通过 API 更新配置：
+     ```bash
+     curl -X POST http://localhost:8000/api/config \
+       -H "Content-Type: application/json" \
+       -d '{"storage_type": "local", "max_file_size": 10}'
+     ```
+
+支持热重载的配置项：
+- 存储配置（storage_type 及相关配置）
+- API 响应格式
+- CORS 设置
+- 文件大小限制
+- PDF 处理配置
+- OCR 和语音识别配置
+
+> 注意：某些配置的更改（如存储类型）可能会影响到正在处理的请求，建议在低负载时进行更改。
 
 ## 📝 API 文档
 

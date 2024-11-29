@@ -7,9 +7,6 @@ WORKDIR /app
 # 安装构建依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libssl-dev \
-    ca-certificates \
-    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
@@ -22,13 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 最终阶段
 FROM python:3.9-slim-bullseye
-
-# Install required system dependencies for Azure Speech SDK
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl-dev \
-    ca-certificates \
-    libasound2 \
-    && rm -rf /var/lib/apt/lists/*
 
 # 复制虚拟环境
 COPY --from=builder /opt/venv /opt/venv
