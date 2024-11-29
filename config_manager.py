@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Dict, Any, List
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,6 +8,7 @@ class ConfigManager:
     _instance = None
     _app: FastAPI = None
     _config: Dict[str, Any] = {}
+    _cors_middleware = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -18,6 +19,41 @@ class ConfigManager:
     def initialize(cls, app: FastAPI):
         cls._app = app
         cls._load_config()
+        # 初始化时添加 CORS 中间件
+        cls._setup_cors()
+
+    @classmethod
+    def _setup_cors(cls):
+        """设置 CORS 中间件"""
+        origins = cls._get_cors_origins()
+        
+        # 如果已经存在 CORS 中间件，先移除它
+        if cls._cors_middleware is not None:
+            cls._app.middleware_stack = None
+            cls._app.middleware_stack = cls._app.build_middleware_stack()
+        
+        # 添加新的 CORS 中间件
+        cls._cors_middleware = CORSMiddleware(
+            app=cls._app,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        
+        # 重建中间件栈
+        if cls._app.middleware_stack is None:
+            cls._app.middleware_stack = cls._app.build_middleware_stack()
+
+    @classmethod
+    def _get_cors_origins(cls) -> List[str]:
+        """获取 CORS origins 配置"""
+        origins = cls._config.get('cors_allow_origins', '*')
+        if isinstance(origins, str):
+            origins = [origin.strip() for origin in origins.split(',') if origin.strip()]
+        if not origins:
+            origins = ["*"]
+        return origins
 
     @classmethod
     def _load_config(cls):
@@ -47,21 +83,7 @@ class ConfigManager:
 
         # 更新 CORS 配置
         if 'cors_allow_origins' in config:
-            origins = [origin.strip() for origin in str(config['cors_allow_origins']).split(',') if origin.strip()]
-            if not origins:
-                origins = ["*"]
-            
-            # 重新配置 CORS 中间件
-            if cls._app:
-                # 移除旧的 CORS 中间件
-                cls._app.user_middleware = [m for m in cls._app.user_middleware if not isinstance(m.cls, CORSMiddleware)]
-                # 添加新的 CORS 中间件
-                cls._app.add_middleware(
-                    CORSMiddleware,
-                    allow_origins=origins,
-                    allow_methods=["*"],
-                    allow_headers=["*"],
-                )
+            cls._setup_cors()
 
         # 更新环境变量
         cls._update_env_vars(config)
