@@ -24,8 +24,10 @@ async def process_image(file: UploadFile) -> str:
 
 async def process_all(file: UploadFile) -> str:
     """Process all files"""
-
-    if STORAGE_TYPE == "common":
+    
+    print(f"Current STORAGE_TYPE: '{STORAGE_TYPE}'")  # Debug output
+    
+    if STORAGE_TYPE.strip() == "common":
         raise ValueError("Cannot Use `Save All` Options Without Storage Config")
 
     return await process_image(file)
