@@ -60,11 +60,29 @@ class ConfigManager:
 
     @classmethod
     def _load_config(cls):
-        """从文件加载配置"""
+        """从文件和环境变量加载配置"""
         config_file = "config.json"
+        config = {}
+        
+        # 1. 从文件加载配置
         if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                cls._config = json.load(f)
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+            except json.JSONDecodeError:
+                pass
+
+        # 2. 从环境变量加载配置
+        env_cors = os.getenv('CORS_ALLOW_ORIGINS')
+        if env_cors:
+            config['cors_allow_origins'] = env_cors
+
+        # 3. 确保配置文件存在
+        if not os.path.exists(config_file):
+            with open(config_file, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+
+        cls._config = config
 
     @classmethod
     def save_config(cls, config: Dict[str, Any]) -> None:

@@ -105,8 +105,8 @@ async def get_config():
 async def update_config(config: Dict[str, Any]):
     """更新配置"""
     try:
+        # 使用 config_manager 保存配置
         config_manager.save_config(config)
-        update_environment_variables(config)
-        return {"status": "success", "message": "配置已更新"}
+        return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
