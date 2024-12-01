@@ -73,11 +73,14 @@ async def upload_file(
 @app.options("/upload")
 async def options_upload():
     """处理上传接口的 OPTIONS 请求"""
+    origins = config_manager._get_cors_origins()
     return JSONResponse(
         content="",
         headers={
+            "Access-Control-Allow-Origin": origins[0] if origins and origins[0] != "*" else "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
             "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "600",  # 缓存预检请求结果10分钟
+            "Access-Control-Allow-Credentials": "true" if origins and origins[0] != "*" else "false",
+            "Access-Control-Max-Age": "600",
         }
     )
