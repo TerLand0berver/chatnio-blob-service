@@ -207,9 +207,12 @@
                            placeholder="默认: 50">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="max_file_size">最大文件大小（字节）</label>
+                    <label class="form-label" for="max_file_size">最大文件大小 (MB)</label>
                     <input type="number" class="form-control" id="max_file_size" name="max_file_size" 
-                           placeholder="默认: 10485760">
+                           placeholder="输入允许的最大文件大小，单位为MB">
+                    <small class="form-text text-muted">
+                        请指定文件大小的上限，以MB为单位。例如：50表示50MB。
+                    </small>
                 </div>
             </div>
 
@@ -218,8 +221,16 @@
                 <div class="form-group">
                     <label class="form-label" for="cors_allow_origins">允许的源（CORS Origins）</label>
                     <input type="text" class="form-control" id="cors_allow_origins" name="cors_allow_origins" 
-                           placeholder="输入允许的源，多个源用逗号分隔，例如: http://localhost:3000,http://example.com">
-                    <small class="form-text text-muted">使用逗号分隔多个源，使用 * 表示允许所有源</small>
+                           placeholder="例如: * 或 https://example.com 或多个域名用逗号分隔">
+                    <small class="form-text text-muted">
+                        <ul class="mb-0 ps-3">
+                            <li>使用 * 允许所有源访问</li>
+                            <li>单个域名必须包含协议，如 https://example.com</li>
+                            <li>多个域名使用逗号分隔</li>
+                            <li>留空将默认使用 *</li>
+                            <li>也可以通过环境变量 CORS_ALLOW_ORIGINS 配置</li>
+                        </ul>
+                    </small>
                 </div>
             </div>
 
@@ -399,9 +410,36 @@
             }
         }
 
+        // CORS配置验证
+        function validateCorsOrigins(origins) {
+            if (!origins || origins.trim() === '' || origins.trim() === '*') {
+                return true;
+            }
+            
+            const originList = origins.split(',').map(o => o.trim());
+            return originList.every(origin => {
+                // 检查是否为通配符
+                if (origin === '*') return true;
+                // 验证域名格式（必须包含协议和域名）
+                return origin.includes('://') && origin.includes('.');
+            });
+        }
+
         // 处理配置提交前的验证
         document.getElementById('configForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+            const corsOriginsInput = document.getElementById('cors_allow_origins');
+            const corsOrigins = corsOriginsInput.value;
+            
+            if (!validateCorsOrigins(corsOrigins)) {
+                e.preventDefault();
+                alert('CORS配置格式无效。请确保：\n' +
+                      '- 使用 * 允许所有源\n' +
+                      '- 或输入完整的域名（包含协议）\n' +
+                      '- 多个域名使用逗号分隔');
+                corsOriginsInput.focus();
+                return false;
+            }
+
             const formData = new FormData(this);
             const config = {};
 
@@ -410,8 +448,9 @@
                 // 验证JSON字段
                 if (key === 'content_wrapper' && value) {
                     if (!isValidJSON(value)) {
-                        showAlert('内容包装器格式不正确，请输入有效的JSON', 'danger');
-                        return;
+                        e.preventDefault();
+                        alert('内容包装器格式不正确，请输入有效的JSON');
+                        return false;
                     }
                 }
 
@@ -435,15 +474,29 @@
                 });
 
                 if (response.ok) {
-                    showAlert('配置已成功保存', 'success');
+                    alert('配置已成功保存');
                     // 重新加载配置以确保显示最新值
                     await loadCurrentConfig();
                 } else {
                     const error = await response.text();
-                    showAlert('保存失败：' + error, 'danger');
+                    alert('保存失败：' + error);
                 }
             } catch (error) {
-                showAlert('保存失败：' + error.message, 'danger');
+                alert('保存失败：' + error.message);
+            }
+        });
+
+        // 实时验证CORS配置
+        document.getElementById('cors_allow_origins').addEventListener('input', function(e) {
+            const input = e.target;
+            const isValid = validateCorsOrigins(input.value);
+            
+            if (isValid) {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+            } else {
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
             }
         });
 
@@ -513,7 +566,7 @@
                     document.getElementById('wrap_content').dispatchEvent(new Event('change'));
                 }
             } catch (error) {
-                showAlert('加载配置失败：' + error.message, 'danger');
+                alert('加载配置失败：' + error.message);
             }
         }
 
@@ -543,43 +596,9 @@
             }
         });
 
-        // 处理配置提交
-        document.getElementById('configForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const config = {};
-
-            // 收集表单数据
-            for (let [key, value] of formData.entries()) {
-                if (value === 'true') value = true;
-                if (value === 'false') value = false;
-                if (!isNaN(value) && value !== '') value = Number(value);
-                config[key] = value;
-            }
-
-            try {
-                const response = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(config)
-                });
-
-                if (response.ok) {
-                    showAlert('配置已保存', 'success');
-                } else {
-                    const error = await response.text();
-                    showAlert('保存失败：' + error, 'danger');
-                }
-            } catch (error) {
-                showAlert('保存失败：' + error.message, 'danger');
-            }
-        });
-
-        function showAlert(message, type) {
+        function alert(message) {
             const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.className = `alert alert-danger alert-dismissible fade show`;
             alertDiv.innerHTML = `
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -592,9 +611,6 @@
                 setTimeout(() => alertDiv.remove(), 150);
             }, 3000);
         }
-
-        // 页面加载时获取当前配置
-        loadCurrentConfig();
     </script>
 </body>
 </html>

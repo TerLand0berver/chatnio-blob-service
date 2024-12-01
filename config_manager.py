@@ -50,13 +50,45 @@ class ConfigManager:
 
     @classmethod
     def _get_cors_origins(cls) -> List[str]:
-        """获取 CORS origins 配置"""
-        origins = cls._config.get('cors_allow_origins', '*')
+        """获取 CORS origins 配置
+        
+        配置优先级：
+        1. 环境变量 CORS_ALLOW_ORIGINS
+        2. 配置文件中的 cors_allow_origins
+        3. 默认值 "*"
+        
+        支持的格式：
+        - "*" 表示允许所有源
+        - 单个域名
+        - 逗号分隔的多个域名
+        """
+        # 从环境变量或配置文件获取origins
+        origins = os.getenv('CORS_ALLOW_ORIGINS') or cls._config.get('cors_allow_origins', '*')
+
+        # 处理字符串格式的origins
         if isinstance(origins, str):
+            # 如果是通配符，直接返回
+            if origins.strip() == '*':
+                return ['*']
+            # 分割并清理域名列表
             origins = [origin.strip() for origin in origins.split(',') if origin.strip()]
+
+        # 如果origins是空列表或None，使用默认值
         if not origins:
-            origins = ["*"]
-        return origins
+            return ['*']
+
+        # 验证域名格式
+        valid_origins = []
+        for origin in origins:
+            # 跳过通配符
+            if origin == '*':
+                return ['*']
+            # 验证域名格式（简单验证，确保包含协议和域名）
+            if '://' in origin and '.' in origin:
+                valid_origins.append(origin)
+
+        # 如果没有有效的域名，返回默认值
+        return valid_origins or ['*']
 
     @classmethod
     def _load_config(cls):
