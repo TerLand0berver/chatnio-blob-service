@@ -80,16 +80,100 @@
         }
 
         .storage-config {
-            padding: 1rem;
-            border-radius: 6px;
+            display: none;
             background: var(--background-color);
+            border-radius: 8px;
+            padding: 1.25rem;
             margin-top: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .storage-config .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.15);
+            outline: none;
+        }
+
+        .form-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .alert {
+            border: none;
             border-radius: 6px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-close {
+            font-size: 0.875rem;
+            opacity: 0.75;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
         }
 
         .page-header {
@@ -119,15 +203,23 @@
                 <h3>基础配置</h3>
                 <div class="form-group">
                     <label class="form-label" for="pdf_max_images">PDF最大图片数</label>
-                    <input type="number" class="form-control" id="pdf_max_images" name="pdf_max_images">
+                    <input type="number" class="form-control" id="pdf_max_images" name="pdf_max_images" 
+                           placeholder="默认: 50">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="max_file_size">最大文件大小(MiB)</label>
-                    <input type="number" class="form-control" id="max_file_size" name="max_file_size">
+                    <label class="form-label" for="max_file_size">最大文件大小（字节）</label>
+                    <input type="number" class="form-control" id="max_file_size" name="max_file_size" 
+                           placeholder="默认: 10485760">
                 </div>
+            </div>
+
+            <div class="config-section">
+                <h3>CORS配置</h3>
                 <div class="form-group">
-                    <label class="form-label" for="cors_allow_origins">CORS允许域名</label>
-                    <input type="text" class="form-control" id="cors_allow_origins" name="cors_allow_origins" placeholder="例如: https://example.com,https://api.example.com">
+                    <label class="form-label" for="cors_allow_origins">允许的源（CORS Origins）</label>
+                    <input type="text" class="form-control" id="cors_allow_origins" name="cors_allow_origins" 
+                           placeholder="输入允许的源，多个源用逗号分隔，例如: http://localhost:3000,http://example.com">
+                    <small class="form-text text-muted">使用逗号分隔多个源，使用 * 表示允许所有源</small>
                 </div>
             </div>
 
@@ -136,40 +228,51 @@
                 <div class="form-group">
                     <label class="form-label" for="storage_type">存储类型</label>
                     <select class="form-select" id="storage_type" name="storage_type">
-                        <option value="base64">Base64</option>
                         <option value="local">本地存储</option>
-                        <option value="s3">S3兼容存储</option>
-                        <option value="tg">Telegram CDN</option>
+                        <option value="s3">S3存储</option>
                         <option value="alist">Alist存储</option>
+                        <option value="tg">Telegram存储</option>
                     </select>
                 </div>
 
-                <div id="local_config" class="storage-config" style="display: none;">
+                <!-- 本地存储配置 -->
+                <div id="local_config" class="storage-config">
                     <div class="form-group">
-                        <label class="form-label" for="local_domain">本地存储域名</label>
-                        <input type="text" class="form-control" id="local_domain" name="local_domain">
+                        <label class="form-label" for="local_storage_domain">本地存储域名</label>
+                        <input type="text" class="form-control" id="local_storage_domain" name="local_storage_domain" 
+                               placeholder="例如: http://localhost:8000">
                     </div>
                 </div>
 
-                <div id="s3_config" class="storage-config" style="display: none;">
-                    <!-- S3配置字段 -->
-                </div>
-
-                <div id="tg_config" class="storage-config" style="display: none;">
+                <!-- S3存储配置 -->
+                <div id="s3_config" class="storage-config">
                     <div class="form-group">
-                        <label class="form-label" for="tg_endpoint">TG-STATE Endpoint</label>
-                        <input type="text" class="form-control" id="tg_endpoint" name="tg_endpoint">
+                        <label class="form-label" for="s3_access_key">Access Key</label>
+                        <input type="text" class="form-control" id="s3_access_key" name="s3_access_key">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="tg_password">Password (可选)</label>
-                        <input type="password" class="form-control" id="tg_password" name="tg_password">
+                        <label class="form-label" for="s3_secret_key">Secret Key</label>
+                        <input type="password" class="form-control" id="s3_secret_key" name="s3_secret_key">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="s3_bucket">Bucket</label>
+                        <input type="text" class="form-control" id="s3_bucket" name="s3_bucket">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="s3_region">Region</label>
+                        <input type="text" class="form-control" id="s3_region" name="s3_region">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="s3_domain">Domain</label>
+                        <input type="text" class="form-control" id="s3_domain" name="s3_domain">
                     </div>
                 </div>
 
-                <div id="alist_config" class="storage-config" style="display: none;">
+                <!-- Alist存储配置 -->
+                <div id="alist_config" class="storage-config">
                     <div class="form-group">
-                        <label class="form-label" for="alist_endpoint">Alist服务地址</label>
-                        <input type="text" class="form-control" id="alist_endpoint" name="alist_endpoint" placeholder="http://your-alist-server:5244">
+                        <label class="form-label" for="alist_endpoint">Endpoint</label>
+                        <input type="text" class="form-control" id="alist_endpoint" name="alist_endpoint">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="alist_username">用户名</label>
@@ -181,8 +284,41 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="alist_path">存储路径</label>
-                        <input type="text" class="form-control" id="alist_path" name="alist_path" placeholder="/blob">
+                        <input type="text" class="form-control" id="alist_path" name="alist_path">
                     </div>
+                </div>
+
+                <!-- Telegram存储配置 -->
+                <div id="tg_config" class="storage-config">
+                    <div class="form-group">
+                        <label class="form-label" for="tg_endpoint">Endpoint</label>
+                        <input type="text" class="form-control" id="tg_endpoint" name="tg_endpoint">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="tg_password">密码</label>
+                        <input type="password" class="form-control" id="tg_password" name="tg_password">
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h3>Azure语音服务配置</h3>
+                <div class="form-group">
+                    <label class="form-label" for="azure_speech_key">Speech Key</label>
+                    <input type="password" class="form-control" id="azure_speech_key" name="azure_speech_key">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="azure_speech_region">Region</label>
+                    <input type="text" class="form-control" id="azure_speech_region" name="azure_speech_region">
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h3>OCR服务配置</h3>
+                <div class="form-group">
+                    <label class="form-label" for="ocr_endpoint">OCR Endpoint</label>
+                    <input type="text" class="form-control" id="ocr_endpoint" name="ocr_endpoint" 
+                           placeholder="OCR服务地址">
                 </div>
             </div>
 
@@ -190,38 +326,61 @@
                 <h3>API响应格式</h3>
                 <div class="form-group">
                     <label class="form-label" for="status_field">状态字段名</label>
-                    <input type="text" class="form-control" id="status_field" name="status_field" placeholder="status">
+                    <input type="text" class="form-control" id="status_field" name="status_field" 
+                           placeholder="默认: status">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="type_field">类型字段名</label>
+                    <input type="text" class="form-control" id="type_field" name="type_field" 
+                           placeholder="默认: type">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="content_field">内容字段名</label>
-                    <input type="text" class="form-control" id="content_field" name="content_field" placeholder="content">
+                    <input type="text" class="form-control" id="content_field" name="content_field" 
+                           placeholder="默认: content">
                 </div>
                 <div class="form-group">
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="wrap_content" name="wrap_content">
-                        <label class="form-check-label" for="wrap_content">启用内容包装</label>
-                    </div>
+                    <label class="form-label" for="error_field">错误字段名</label>
+                    <input type="text" class="form-control" id="error_field" name="error_field" 
+                           placeholder="默认: error">
                 </div>
-
-                <div id="content_wrapper_config" style="display: none;">
-                    <div class="form-group">
-                        <label class="form-label">内容包装格式模板</label>
-                        <select class="form-select mb-3" id="content_wrapper_template">
-                            <option value="">自定义格式</option>
-                            <option value="link">返回链接 (save-all)</option>
-                            <option value="content">返回内容</option>
-                            <option value="markdown">Markdown 原始格式</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">内容包装格式 (JSON)</label>
-                        <textarea class="form-control" id="content_wrapper" name="content_wrapper" rows="4" placeholder='{"text": "${content}", "extra": "additional info"}'></textarea>
-                        <small class="form-text text-muted">使用 ${content} 作为内容占位符</small>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="success_value">成功值</label>
+                    <select class="form-select" id="success_value" name="success_value">
+                        <option value="true">true</option>
+                        <option value="false">false</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="error_value">错误值</label>
+                    <select class="form-select" id="error_value" name="error_value">
+                        <option value="true">true</option>
+                        <option value="false">false</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="include_type">包含类型字段</label>
+                    <select class="form-select" id="include_type" name="include_type">
+                        <option value="true">是</option>
+                        <option value="false">否</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="wrap_content">包装内容</label>
+                    <select class="form-select" id="wrap_content" name="wrap_content">
+                        <option value="true">是</option>
+                        <option value="false">否</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="content_wrapper">内容包装器（JSON格式）</label>
+                    <textarea class="form-control" id="content_wrapper" name="content_wrapper" 
+                             placeholder='例如: {"data": null}'></textarea>
+                    <small class="form-text text-muted">用于包装响应内容的JSON模板，使用null表示内容位置</small>
                 </div>
             </div>
 
-            <div class="text-end">
+            <div class="form-group mt-4">
                 <button type="submit" class="btn btn-primary">保存配置</button>
             </div>
         </form>
@@ -229,73 +388,195 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 显示/隐藏相应的存储配置
-        document.getElementById('storage_type').addEventListener('change', function() {
-            document.querySelectorAll('.storage-config').forEach(el => el.style.display = 'none');
-            const selectedConfig = document.getElementById(this.value + '_config');
-            if (selectedConfig) {
-                selectedConfig.style.display = 'block';
-            }
-        });
-
-        // 显示/隐藏内容包装配置
-        document.getElementById('wrap_content').addEventListener('change', function() {
-            const wrapperConfig = document.getElementById('content_wrapper_config');
-            wrapperConfig.style.display = this.checked ? 'block' : 'none';
-        });
-
-        // 加载当前配置
-        async function loadCurrentConfig() {
+        // 验证JSON格式
+        function isValidJSON(str) {
+            if (!str) return true;
             try {
-                const response = await fetch('/api/config');
-                if (response.ok) {
-                    const config = await response.json();
-                    Object.entries(config).forEach(([key, value]) => {
-                        const element = document.getElementById(key);
-                        if (element) {
-                            if (element.type === 'checkbox') {
-                                element.checked = value;
-                            } else {
-                                element.value = value;
-                            }
-                        }
-                    });
-                    // 触发存储类型变更事件以显示相应配置
-                    document.getElementById('storage_type').dispatchEvent(new Event('change'));
-                    document.getElementById('wrap_content').dispatchEvent(new Event('change'));
-                }
-            } catch (error) {
-                console.error('加载配置失败：', error);
-                showAlert('加载配置失败：' + error.message, 'danger');
+                JSON.parse(str);
+                return true;
+            } catch (e) {
+                return false;
             }
         }
 
-        // 处理配置提交
+        // 处理配置提交前的验证
         document.getElementById('configForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            
+            const config = {};
+
+            // 验证并收集表单数据
+            for (let [key, value] of formData.entries()) {
+                // 验证JSON字段
+                if (key === 'content_wrapper' && value) {
+                    if (!isValidJSON(value)) {
+                        showAlert('内容包装器格式不正确，请输入有效的JSON', 'danger');
+                        return;
+                    }
+                }
+
+                // 转换布尔值和数字
+                if (value === 'true') value = true;
+                if (value === 'false') value = false;
+                if (!isNaN(value) && value !== '' && key !== 'cors_allow_origins') {
+                    value = Number(value);
+                }
+
+                config[key] = value;
+            }
+
             try {
                 const response = await fetch('/api/config', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(config)
                 });
-                
+
                 if (response.ok) {
-                    showAlert('配置已保存', 'success');
+                    showAlert('配置已成功保存', 'success');
+                    // 重新加载配置以确保显示最新值
+                    await loadCurrentConfig();
                 } else {
-                    showAlert('保存失败：' + (await response.text()), 'danger');
+                    const error = await response.text();
+                    showAlert('保存失败：' + error, 'danger');
                 }
             } catch (error) {
                 showAlert('保存失败：' + error.message, 'danger');
             }
         });
 
-        // 显示提示信息
+        // 监听存储类型变更
+        document.getElementById('storage_type').addEventListener('change', function() {
+            const storageType = this.value;
+            const configs = {
+                'local': document.getElementById('local_config'),
+                's3': document.getElementById('s3_config'),
+                'alist': document.getElementById('alist_config'),
+                'tg': document.getElementById('tg_config')
+            };
+
+            // 隐藏所有配置
+            Object.values(configs).forEach(config => {
+                if (config) {
+                    config.style.display = 'none';
+                    // 清除非当前存储类型的输入值
+                    if (config !== configs[storageType]) {
+                        config.querySelectorAll('input').forEach(input => {
+                            input.value = '';
+                        });
+                    }
+                }
+            });
+
+            // 显示选中的配置
+            if (configs[storageType]) {
+                configs[storageType].style.display = 'block';
+            }
+        });
+
+        // 监听包装内容选项
+        document.getElementById('wrap_content').addEventListener('change', function() {
+            const wrapper = document.getElementById('content_wrapper');
+            const wrapperGroup = wrapper.closest('.form-group');
+            wrapperGroup.style.display = this.value === 'true' ? 'block' : 'none';
+            if (this.value === 'false') {
+                wrapper.value = '';
+            }
+        });
+
+        // 加载配置时的处理
+        async function loadCurrentConfig() {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    
+                    // 遍历所有表单元素并设置值
+                    const form = document.getElementById('configForm');
+                    Object.entries(config).forEach(([key, value]) => {
+                        const element = form.elements[key];
+                        if (element) {
+                            if (element.type === 'checkbox') {
+                                element.checked = value;
+                            } else if (element.type === 'select-one') {
+                                element.value = String(value);
+                            } else {
+                                element.value = value;
+                            }
+                        }
+                    });
+
+                    // 触发相关事件以更新UI状态
+                    document.getElementById('storage_type').dispatchEvent(new Event('change'));
+                    document.getElementById('wrap_content').dispatchEvent(new Event('change'));
+                }
+            } catch (error) {
+                showAlert('加载配置失败：' + error.message, 'danger');
+            }
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCurrentConfig();
+        });
+
+        // 显示/隐藏相应的存储配置
+        document.getElementById('storage_type').addEventListener('change', function() {
+            const storageType = this.value;
+            const configs = {
+                'local': document.getElementById('local_config'),
+                's3': document.getElementById('s3_config'),
+                'alist': document.getElementById('alist_config'),
+                'tg': document.getElementById('tg_config')
+            };
+
+            // 隐藏所有配置
+            Object.values(configs).forEach(config => {
+                if (config) config.style.display = 'none';
+            });
+
+            // 显示选中的配置
+            if (configs[storageType]) {
+                configs[storageType].style.display = 'block';
+            }
+        });
+
+        // 处理配置提交
+        document.getElementById('configForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const config = {};
+
+            // 收集表单数据
+            for (let [key, value] of formData.entries()) {
+                if (value === 'true') value = true;
+                if (value === 'false') value = false;
+                if (!isNaN(value) && value !== '') value = Number(value);
+                config[key] = value;
+            }
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    showAlert('配置已保存', 'success');
+                } else {
+                    const error = await response.text();
+                    showAlert('保存失败：' + error, 'danger');
+                }
+            } catch (error) {
+                showAlert('保存失败：' + error.message, 'danger');
+            }
+        });
+
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
@@ -305,7 +586,7 @@
             `;
             document.querySelector('.container').insertBefore(alertDiv, document.getElementById('configForm'));
             
-            // 3秒后自动消失
+            // 3秒后自动关闭
             setTimeout(() => {
                 alertDiv.classList.remove('show');
                 setTimeout(() => alertDiv.remove(), 150);
